@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 const CTASection = () => {
+  const navigate = useNavigate();
   return (
     <section className="py-24 relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -28,6 +30,7 @@ const CTASection = () => {
           <Button
             size="lg"
             className="rounded-full text-base px-10 py-6 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+            onClick={() => navigate("/upload")}
           >
             Try LegalEase AI — It's Free
             <ArrowRight className="ml-2 h-5 w-5" />

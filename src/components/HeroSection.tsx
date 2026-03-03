@@ -1,8 +1,15 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const scrollToHowItWorks = () => {
+    document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       {/* Background blobs */}
@@ -50,11 +57,11 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.45 }}
           >
-            <Button size="lg" className="rounded-full text-base px-8 py-6 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
+            <Button size="lg" className="rounded-full text-base px-8 py-6 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all" onClick={() => navigate("/upload")}>
               Try LegalEase AI — It's Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" className="rounded-full text-base px-8 py-6">
+            <Button variant="outline" size="lg" className="rounded-full text-base px-8 py-6" onClick={scrollToHowItWorks}>
               See How It Works
             </Button>
           </motion.div>
