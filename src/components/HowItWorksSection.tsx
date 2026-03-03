@@ -24,7 +24,7 @@ const steps = [
 
 const HowItWorksSection = () => {
   return (
-    <section className="py-24 bg-secondary/40">
+    <section id="how-it-works" className="py-24 bg-secondary/40">
       <div className="container mx-auto px-6">
         <motion.div
           className="text-center mb-16"
