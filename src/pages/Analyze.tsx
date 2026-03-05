@@ -18,6 +18,7 @@ import {
 import {
   analyzeDocument,
   getChatResponse,
+  setDocumentContext,
   type DocumentAnalysis,
   type ChatMessage,
 } from "@/lib/mockAnalysis";
@@ -30,6 +31,7 @@ const Analyze = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,37 +40,55 @@ const Analyze = () => {
       navigate("/upload");
       return;
     }
-    // Simulate analysis delay
-    const timer = setTimeout(() => {
-      setAnalysis(analyzeDocument(doc));
-      setIsAnalyzing(false);
-      setMessages([
-        {
-          role: "assistant",
-          content:
-            "Hey! 👋 I've finished analyzing your document. I found a few things you should know about. Feel free to ask me anything — like \"What happens if I break the lease early?\" or \"Is there an auto-renewal clause?\"",
-        },
-      ]);
-    }, 2000);
-    return () => clearTimeout(timer);
+    
+    // Set document context for chat
+    setDocumentContext(doc);
+    
+    // Call real AI API
+    analyzeDocument(doc)
+      .then((result) => {
+        setAnalysis(result);
+        setIsAnalyzing(false);
+        setMessages([
+          {
+            role: "assistant",
+            content:
+              "Hey! 👋 I've finished analyzing your document. I found a few things you should know about. Feel free to ask me anything — like \"What happens if I break the lease early?\" or \"Is there an auto-renewal clause?\"",
+          },
+        ]);
+      })
+      .catch((err) => {
+        console.error("Analysis failed:", err);
+        setError(err.message || "Unknown error occurred");
+        setIsAnalyzing(false);
+        setMessages([
+          {
+            role: "assistant",
+            content: "Sorry, I encountered an error analyzing your document. Please check your API key and try again.",
+          },
+        ]);
+      });
   }, [navigate]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg: ChatMessage = { role: "user", content: input };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      const response = getChatResponse(input);
+    try {
+      const response = await getChatResponse(input);
       setMessages((prev) => [...prev, { role: "assistant", content: response }]);
+    } catch (error) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   const clauseIcon = (type: string) => {
@@ -125,7 +145,44 @@ const Analyze = () => {
     );
   }
 
-  if (!analysis) return null;
+  // Show error if analysis failed
+  if (error || !analysis) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div
+          className="text-center max-w-md mx-auto p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="w-20 h-20 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="h-10 w-10 text-destructive" />
+          </div>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-3">
+            Analysis Failed
+          </h2>
+          <p className="text-muted-foreground font-body mb-4">
+            {error || "An unknown error occurred while analyzing your document."}
+          </p>
+          <div className="bg-secondary/60 rounded-xl p-4 text-left mb-4">
+            <p className="text-sm font-body text-foreground">
+              <strong>Troubleshooting:</strong>
+            </p>
+            <ul className="text-sm text-muted-foreground mt-2 list-disc list-inside">
+              <li>Make sure VITE_OPENROUTER_API_KEY is set in .env</li>
+              <li>Restart the dev server after adding the key</li>
+              <li>Check your API key is valid at openrouter.ai</li>
+            </ul>
+          </div>
+          <Button
+            onClick={() => navigate("/upload")}
+            className="rounded-full"
+          >
+            Try Again
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
