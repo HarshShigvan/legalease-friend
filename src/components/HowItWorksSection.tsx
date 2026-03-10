@@ -6,25 +6,25 @@ const steps = [
     icon: Upload,
     number: "01",
     title: "Upload",
-    description: "Drop your lease, contract, or any legal doc. We handle PDFs, Word files — you name it.",
+    description: "Drop your lease, contract, or any legal doc. PDF or paste text directly.",
   },
   {
     icon: MessageSquare,
     number: "02",
     title: "Chat",
-    description: "Ask questions in plain English. \"What happens if I break the lease early?\" — that kind of thing.",
+    description: "Ask questions in plain English. \"What happens if I break the lease early?\"",
   },
   {
     icon: CheckCircle,
     number: "03",
     title: "Understand",
-    description: "Get clear answers, flagged clauses, and a summary you can actually understand. Confidence unlocked. 💪",
+    description: "Get clear answers, flagged clauses, and a summary you can actually understand.",
   },
 ];
 
 const HowItWorksSection = () => {
   return (
-    <section id="how-it-works" className="py-24 bg-secondary/40">
+    <section id="how-it-works" className="py-24 border-t border-border bg-grid-sm">
       <div className="container mx-auto px-6">
         <motion.div
           className="text-center mb-16"
@@ -37,14 +37,14 @@ const HowItWorksSection = () => {
             How It Works
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto font-body">
-            Three steps. That's it. Seriously.
+            Three steps. That's it.
           </p>
         </motion.div>
 
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-3 gap-8 relative">
             {/* Connector line */}
-            <div className="hidden md:block absolute top-16 left-[20%] right-[20%] h-0.5 bg-border" />
+            <div className="hidden md:block absolute top-12 left-[20%] right-[20%] h-px bg-border" />
 
             {steps.map((step, index) => (
               <motion.div
@@ -55,11 +55,11 @@ const HowItWorksSection = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
               >
-                <div className="relative z-10 w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                  <step.icon className="h-7 w-7 text-primary-foreground" />
+                <div className="relative z-10 w-14 h-14 mx-auto mb-6 rounded-xl border border-primary/40 bg-secondary flex items-center justify-center glow-sm">
+                  <step.icon className="h-6 w-6 text-primary" />
                 </div>
-                <span className="text-sm font-medium text-primary font-body tracking-wider">
-                  STEP {step.number}
+                <span className="text-xs font-mono font-medium text-primary tracking-widest uppercase">
+                  Step {step.number}
                 </span>
                 <h3 className="font-display text-2xl font-semibold text-foreground mt-2 mb-3">
                   {step.title}
