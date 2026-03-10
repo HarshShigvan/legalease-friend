@@ -6,10 +6,9 @@ import { ArrowRight } from "lucide-react";
 const CTASection = () => {
   const navigate = useNavigate();
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-24 relative overflow-hidden border-t border-border">
       <div className="absolute inset-0 -z-10">
-        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-primary/8 rounded-full blur-3xl" />
-        <div className="absolute top-0 right-1/4 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px]" />
       </div>
 
       <div className="container mx-auto px-6">
@@ -21,22 +20,22 @@ const CTASection = () => {
           transition={{ duration: 0.6 }}
         >
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-6">
-            Ready to Finally Understand the Fine Print?
+            Ready to decode the{" "}
+            <span className="text-primary text-glow">fine print</span>?
           </h2>
           <p className="text-muted-foreground text-lg mb-10 font-body leading-relaxed">
-            No more nodding along pretending you understood that rental clause. 
-            Your future self will thank you. 🙌
+            Stop guessing. Start understanding. Upload your document and get instant clarity.
           </p>
           <Button
             size="lg"
-            className="rounded-full text-base px-10 py-6 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+            className="rounded-full text-base px-10 py-6 bg-primary text-primary-foreground hover:bg-primary/90 glow-md transition-all font-semibold"
             onClick={() => navigate("/upload")}
           >
             Try LegalEase AI — It's Free
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-          <p className="mt-6 text-sm text-muted-foreground font-body">
-            No signup required • Free forever for basic use • Your docs stay private
+          <p className="mt-6 text-sm text-muted-foreground font-mono">
+            No signup required · Free forever · Your docs stay private
           </p>
         </motion.div>
       </div>

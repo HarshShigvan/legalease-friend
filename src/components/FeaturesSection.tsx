@@ -8,50 +8,42 @@ const features = [
     title: "Plain-English Summaries",
     description:
       "Upload any legal doc and get a clear, jargon-free summary. Like a translator for lawyer-speak.",
-    color: "text-primary",
-    bg: "bg-primary/10",
   },
   {
     icon: ShieldAlert,
     title: "Sneaky Clause Detection",
     description:
       "We flag the tricky stuff — hidden fees, auto-renewals, liability traps — before they bite you.",
-    color: "text-accent",
-    bg: "bg-accent/10",
   },
   {
     icon: MessageCircle,
     title: "Chat-Style Q&A",
     description:
       "Got a question about Section 4, Paragraph B? Just ask. It's like texting a really smart buddy.",
-    color: "text-soft-teal",
-    bg: "bg-soft-teal/10",
   },
   {
     icon: Lock,
-    title: "Privacy First, Always",
+    title: "Privacy First",
     description:
-      "Your documents stay yours. We don't store, share, or peek. Pinky promise. 🤞",
-    color: "text-gentle-green",
-    bg: "bg-gentle-green/10",
+      "Your documents stay yours. We don't store, share, or peek. Pinky promise.",
   },
 ];
 
 const containerVariants = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.12 },
+    transition: { staggerChildren: 0.1 },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 const FeaturesSection = () => {
   return (
-    <section className="py-24 bg-secondary/40">
+    <section className="py-24 border-t border-border">
       <div className="container mx-auto px-6">
         <motion.div
           className="text-center mb-16"
@@ -61,10 +53,10 @@ const FeaturesSection = () => {
           transition={{ duration: 0.5 }}
         >
           <h2 className="font-display text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            What LegalEase AI Does for You
+            What LegalEase AI Does
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto font-body">
-            Think of us as your legal document sidekick — always ready, always on your side.
+            Your legal document sidekick — always ready, always on your side.
           </p>
         </motion.div>
 
@@ -77,12 +69,12 @@ const FeaturesSection = () => {
         >
           {features.map((feature) => (
             <motion.div key={feature.title} variants={itemVariants}>
-              <Card className="h-full border-0 shadow-md hover:shadow-lg transition-shadow bg-card rounded-2xl">
+              <Card className="h-full border border-border bg-card hover:border-primary/30 transition-colors rounded-xl group">
                 <CardContent className="p-6 pt-8">
-                  <div className={`w-12 h-12 rounded-xl ${feature.bg} flex items-center justify-center mb-5`}>
-                    <feature.icon className={`h-6 w-6 ${feature.color}`} />
+                  <div className="w-10 h-10 rounded-lg border border-border bg-secondary flex items-center justify-center mb-5 group-hover:border-primary/40 group-hover:glow-sm transition-all">
+                    <feature.icon className="h-5 w-5 text-primary" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold text-card-foreground mb-3">
+                  <h3 className="font-display text-lg font-semibold text-card-foreground mb-3">
                     {feature.title}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed font-body text-sm">

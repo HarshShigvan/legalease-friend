@@ -16,7 +16,6 @@ const Upload = () => {
     const file = e.target.files?.[0];
     if (file) {
       setFileName(file.name);
-      // For demo: simulate reading a PDF with mock text
       const mockPdfText = `RESIDENTIAL LEASE AGREEMENT
 
 This Lease Agreement ("Agreement") is entered into between the Landlord and Tenant for the property located at 123 Main Street.
@@ -42,7 +41,6 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
 
   const handleAnalyze = () => {
     if (text.trim()) {
-      // Store text in sessionStorage for the analysis page
       sessionStorage.setItem("legalease_doc", text);
       navigate("/analyze");
     }
@@ -51,7 +49,7 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
   const hasContent = text.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background bg-grid">
       <div className="container mx-auto px-6 py-8">
         <Button
           variant="ghost"
@@ -59,7 +57,7 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
           className="mb-8 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
+          Back
         </Button>
 
         <motion.div
@@ -73,7 +71,7 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
               Upload Your Document
             </h1>
             <p className="text-muted-foreground text-lg font-body">
-              Drop a PDF or paste your legal text — we'll do the heavy reading. 📄
+              Drop a PDF or paste your legal text — we'll handle the rest.
             </p>
           </div>
 
@@ -82,7 +80,7 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
             <Button
               variant={activeTab === "paste" ? "default" : "outline"}
               onClick={() => setActiveTab("paste")}
-              className="rounded-full"
+              className={`rounded-full ${activeTab === "paste" ? "bg-primary text-primary-foreground glow-sm" : "border-border text-foreground hover:border-primary/30"}`}
             >
               <FileText className="mr-2 h-4 w-4" />
               Paste Text
@@ -90,24 +88,24 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
             <Button
               variant={activeTab === "upload" ? "default" : "outline"}
               onClick={() => setActiveTab("upload")}
-              className="rounded-full"
+              className={`rounded-full ${activeTab === "upload" ? "bg-primary text-primary-foreground glow-sm" : "border-border text-foreground hover:border-primary/30"}`}
             >
               <UploadIcon className="mr-2 h-4 w-4" />
               Upload PDF
             </Button>
           </div>
 
-          <Card className="border-0 shadow-lg rounded-2xl">
+          <Card className="border border-border bg-card rounded-xl">
             <CardContent className="p-6">
               {activeTab === "paste" ? (
                 <Textarea
-                  placeholder="Paste your legal document text here... (e.g., a lease agreement, contract, terms of service)"
-                  className="min-h-[300px] text-sm font-body resize-none border-muted rounded-xl"
+                  placeholder="Paste your legal document text here..."
+                  className="min-h-[300px] text-sm font-body resize-none border-border bg-secondary/50 rounded-lg focus:border-primary/40 placeholder:text-muted-foreground"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                 />
               ) : (
-                <div className="min-h-[300px] flex flex-col items-center justify-center border-2 border-dashed border-muted rounded-xl p-8">
+                <div className="min-h-[300px] flex flex-col items-center justify-center border border-dashed border-border rounded-lg p-8 hover:border-primary/30 transition-colors">
                   <label className="cursor-pointer text-center">
                     <input
                       type="file"
@@ -115,19 +113,19 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
                       onChange={handleFileChange}
                       className="hidden"
                     />
-                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                      <UploadIcon className="h-8 w-8 text-primary" />
+                    <div className="w-14 h-14 rounded-xl border border-border bg-secondary flex items-center justify-center mx-auto mb-4">
+                      <UploadIcon className="h-7 w-7 text-primary" />
                     </div>
                     <p className="font-display text-lg font-semibold text-foreground mb-2">
                       {fileName || "Click to upload a file"}
                     </p>
                     <p className="text-sm text-muted-foreground font-body">
-                      PDF, DOC, DOCX, or TXT files supported
+                      PDF, DOC, DOCX, or TXT files
                     </p>
                   </label>
                   {fileName && (
-                    <p className="mt-4 text-sm text-primary font-medium font-body">
-                      ✅ {fileName} loaded successfully
+                    <p className="mt-4 text-sm text-primary font-mono">
+                      ✓ {fileName} loaded
                     </p>
                   )}
                 </div>
@@ -136,7 +134,7 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
               <div className="mt-6 flex justify-end">
                 <Button
                   size="lg"
-                  className="rounded-full px-8 shadow-lg shadow-primary/25"
+                  className="rounded-full px-8 bg-primary text-primary-foreground hover:bg-primary/90 glow-md transition-all font-semibold"
                   disabled={!hasContent}
                   onClick={handleAnalyze}
                 >
@@ -148,8 +146,8 @@ This Lease Agreement ("Agreement") is entered into between the Landlord and Tena
             </CardContent>
           </Card>
 
-          <p className="text-center text-sm text-muted-foreground mt-6 font-body">
-            🔒 Your documents stay private — nothing is stored or shared. This is a demo for demonstration purposes.
+          <p className="text-center text-sm text-muted-foreground mt-6 font-mono">
+            🔒 Your documents stay private — nothing is stored or shared.
           </p>
         </motion.div>
       </div>

@@ -14,8 +14,8 @@ const Index = () => {
       <CTASection />
       <footer className="py-8 border-t border-border">
         <div className="container mx-auto px-6 text-center">
-          <p className="text-sm text-muted-foreground font-body">
-            © 2026 LegalEase AI. Made with care for humans who hate fine print.
+          <p className="text-sm text-muted-foreground font-mono">
+            © 2026 LegalEase AI — Built for humans who hate fine print.
           </p>
         </div>
       </footer>
