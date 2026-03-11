@@ -11,53 +11,179 @@ import {
 } from "lucide-react";
 import {
   analyzeDocument, getChatResponse, setDocumentContext,
-  type DocumentAnalysis, type ChatMessage,
+  type DocumentAnalysis, type ChatMessage, type SupportedLanguage, type UploadedDocument,
 } from "@/lib/mockAnalysis";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const ALL_DOCUMENTS_ID = "all-documents";
+const languageOptions: { value: SupportedLanguage; label: string }[] = [
+  { value: "english", label: "English" },
+  { value: "hindi", label: "Hindi" },
+  { value: "marathi", label: "Marathi" },
+];
+
+const buildCombinedText = (documents: UploadedDocument[]) =>
+  documents
+    .map((doc, index) => `----- DOCUMENT ${index + 1}: ${doc.name} -----\n${doc.text}`)
+    .join("\n\n");
 
 const Analyze = () => {
   const navigate = useNavigate();
-  const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null);
+  const [documents, setDocuments] = useState<UploadedDocument[]>([]);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string>(ALL_DOCUMENTS_ID);
+  const [analysisByDocument, setAnalysisByDocument] = useState<Record<string, DocumentAnalysis>>({});
+  const [messagesByDocument, setMessagesByDocument] = useState<Record<string, ChatMessage[]>>({});
   const [activeTab, setActiveTab] = useState<"summary" | "chat">("summary");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [language, setLanguage] = useState<SupportedLanguage>("english");
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  const selectedDocument = selectedDocumentId === ALL_DOCUMENTS_ID
+    ? null
+    : documents.find((doc) => doc.id === selectedDocumentId) || null;
+
+  const analysisCacheKey = `${selectedDocumentId}:${language}`;
+  const messageCacheKey = `${selectedDocumentId}:${language}`;
+  const analysis = analysisByDocument[analysisCacheKey] || null;
+  const messages = messagesByDocument[messageCacheKey] || [];
+  const messageCount = messages.length;
+
   useEffect(() => {
-    const doc = sessionStorage.getItem("legalease_doc");
-    if (!doc) { navigate("/upload"); return; }
-    setDocumentContext(doc);
-    analyzeDocument(doc)
+    const storedDocs = sessionStorage.getItem("legalease_docs");
+    const legacyDoc = sessionStorage.getItem("legalease_doc");
+    const storedLanguage = sessionStorage.getItem("legalease_language") as SupportedLanguage | null;
+
+    if (storedLanguage) {
+      setLanguage(storedLanguage);
+    }
+
+    if (storedDocs) {
+      try {
+        const parsed = JSON.parse(storedDocs) as UploadedDocument[];
+        if (!parsed.length) {
+          navigate("/upload");
+          return;
+        }
+        setDocuments(parsed);
+        setSelectedDocumentId(parsed.length > 1 ? parsed[0].id : ALL_DOCUMENTS_ID);
+        return;
+      } catch {
+        // Fall back to legacy storage below.
+      }
+    }
+
+    if (!legacyDoc) {
+      navigate("/upload");
+      return;
+    }
+
+    const fallbackDocument: UploadedDocument = {
+      id: "doc-1-legacy",
+      index: 0,
+      name: "Uploaded Document",
+      text: legacyDoc,
+    };
+
+    setDocuments([fallbackDocument]);
+    setSelectedDocumentId(ALL_DOCUMENTS_ID);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!documents.length) return;
+
+    const targetText = selectedDocument
+      ? selectedDocument.text
+      : buildCombinedText(documents);
+    const targetName = selectedDocument
+      ? selectedDocument.name
+      : "All Documents";
+
+    setDocumentContext(targetText, targetName, language);
+
+    if (analysisByDocument[analysisCacheKey]) {
+      setIsAnalyzing(false);
+      setError(null);
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setError(null);
+
+    analyzeDocument(targetText, targetName, language)
       .then((result) => {
-        setAnalysis(result);
+        setAnalysisByDocument((prev) => ({
+          ...prev,
+          [analysisCacheKey]: result,
+        }));
+        setMessagesByDocument((prev) => ({
+          ...prev,
+          [messageCacheKey]: prev[messageCacheKey] || [{
+            role: "assistant",
+            content: `Analysis complete for ${targetName}. Ask me anything about this document.`,
+          }],
+        }));
         setIsAnalyzing(false);
-        setMessages([{
-          role: "assistant",
-          content: "Analysis complete. I found several notable clauses in your document. Ask me anything — like \"What happens if I break the lease early?\" or \"Is there an auto-renewal clause?\"",
-        }]);
       })
       .catch((err) => {
         setError(err.message || "Unknown error");
+        setMessagesByDocument((prev) => ({
+          ...prev,
+          [messageCacheKey]: [{ role: "assistant", content: "Error analyzing this document. Please check your API key and try again." }],
+        }));
         setIsAnalyzing(false);
-        setMessages([{ role: "assistant", content: "Error analyzing document. Please check your API key and try again." }]);
       });
-  }, [navigate]);
+  }, [analysisByDocument, analysisCacheKey, documents, language, messageCacheKey, selectedDocument, selectedDocumentId]);
 
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messageCount]);
+
+  const handleDocumentChange = (documentId: string) => {
+    setSelectedDocumentId(documentId);
+    setInput("");
+    setActiveTab("summary");
+  };
+
+  const handleLanguageChange = (value: SupportedLanguage) => {
+    setLanguage(value);
+    setInput("");
+    sessionStorage.setItem("legalease_language", value);
+  };
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    setMessages((prev) => [...prev, { role: "user", content: input }]);
+
+    const question = input;
+    setMessagesByDocument((prev) => ({
+      ...prev,
+      [messageCacheKey]: [...(prev[messageCacheKey] || []), { role: "user", content: question }],
+    }));
     setInput("");
     setIsTyping(true);
+
     try {
-      const response = await getChatResponse(input);
-      setMessages((prev) => [...prev, { role: "assistant", content: response }]);
+      const response = await getChatResponse(question);
+      setMessagesByDocument((prev) => ({
+        ...prev,
+        [messageCacheKey]: [...(prev[messageCacheKey] || []), { role: "assistant", content: response }],
+      }));
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I encountered an error. Please try again." }]);
-    } finally { setIsTyping(false); }
+      setMessagesByDocument((prev) => ({
+        ...prev,
+        [messageCacheKey]: [...(prev[messageCacheKey] || []), { role: "assistant", content: "Sorry, I encountered an error. Please try again." }],
+      }));
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const clauseIcon = (type: string) => {
@@ -79,7 +205,7 @@ const Analyze = () => {
           <div className="w-16 h-16 rounded-xl border border-primary/40 bg-secondary flex items-center justify-center mx-auto mb-6 glow-md">
             <FileText className="h-8 w-8 text-primary" />
           </div>
-          <h2 className="font-display text-2xl font-bold text-foreground mb-3">Analyzing document...</h2>
+          <h2 className="font-display text-2xl font-bold text-foreground mb-3">Analyzing documents...</h2>
           <p className="text-muted-foreground font-mono text-sm">Processing legal text</p>
           <div className="mt-6 flex gap-1.5 justify-center">
             {[0, 1, 2].map((i) => (
@@ -113,9 +239,21 @@ const Analyze = () => {
       <div className="container mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <Button variant="ghost" onClick={() => navigate("/upload")} className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Upload Another
+            <ArrowLeft className="mr-2 h-4 w-4" /> Upload More
           </Button>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <Select value={language} onValueChange={(value: SupportedLanguage) => handleLanguageChange(value)}>
+              <SelectTrigger className="w-[160px] rounded-full border-border bg-card">
+                <SelectValue placeholder="Language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languageOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               variant={activeTab === "summary" ? "default" : "outline"}
               onClick={() => setActiveTab("summary")}
@@ -133,9 +271,32 @@ const Analyze = () => {
           </div>
         </div>
 
+        {documents.length > 1 && (
+          <div className="max-w-3xl mx-auto mb-6">
+            <div className="flex flex-wrap gap-2">
+              {documents.map((doc) => (
+                <Button
+                  key={doc.id}
+                  variant={selectedDocumentId === doc.id ? "default" : "outline"}
+                  onClick={() => handleDocumentChange(doc.id)}
+                  className={`rounded-full ${selectedDocumentId === doc.id ? "bg-primary text-primary-foreground glow-sm" : "border-border text-foreground"}`}
+                >
+                  {doc.name}
+                </Button>
+              ))}
+              <Button
+                variant={selectedDocumentId === ALL_DOCUMENTS_ID ? "default" : "outline"}
+                onClick={() => handleDocumentChange(ALL_DOCUMENTS_ID)}
+                className={`rounded-full ${selectedDocumentId === ALL_DOCUMENTS_ID ? "bg-primary text-primary-foreground glow-sm" : "border-border text-foreground"}`}
+              >
+                All Documents
+              </Button>
+            </div>
+          </div>
+        )}
+
         {activeTab === "summary" ? (
           <motion.div className="max-w-3xl mx-auto space-y-6" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            {/* Risk Level */}
             <Card className="border border-border bg-card rounded-xl">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4 mb-4">
@@ -150,11 +311,10 @@ const Analyze = () => {
                   </div>
                   <div>
                     <h2 className="font-display text-xl font-bold text-foreground">
-                      Risk Level: <span className="capitalize text-primary">{analysis.riskLevel}</span>
+                      {selectedDocument ? selectedDocument.name : "All Documents"}
                     </h2>
                     <p className="text-sm text-muted-foreground font-body">
-                      {analysis.riskLevel === "high" ? "Significant concerns detected." :
-                       analysis.riskLevel === "medium" ? "Some items to watch." : "Standard agreement."}
+                      Risk Level: <span className="capitalize text-primary">{analysis.riskLevel}</span>
                     </p>
                   </div>
                 </div>
@@ -168,7 +328,6 @@ const Analyze = () => {
               </CardContent>
             </Card>
 
-            {/* Summary */}
             <Card className="border border-border bg-card rounded-xl">
               <CardContent className="p-6">
                 <h3 className="font-display text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
@@ -178,7 +337,6 @@ const Analyze = () => {
               </CardContent>
             </Card>
 
-            {/* Flagged Clauses */}
             <div>
               <h3 className="font-display text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-primary" /> Flagged Clauses ({analysis.clauses.length})
@@ -260,7 +418,7 @@ const Analyze = () => {
                   <div className="p-4 border-t border-border">
                     <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2">
                       <Input value={input} onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask anything about your document..."
+                        placeholder="Ask anything about the selected document..."
                         className="rounded-full font-body bg-secondary border-border focus:border-primary/40" />
                       <Button type="submit" size="icon" className="rounded-full shrink-0 bg-primary text-primary-foreground glow-sm" disabled={!input.trim()}>
                         <Send className="h-4 w-4" />
