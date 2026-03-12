@@ -6,8 +6,9 @@ import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload as UploadIcon, FileText, ArrowLeft, ArrowRight, Sparkles } from "lucide-react";
+import { Upload as UploadIcon, FileText, ArrowLeft, ArrowRight, Sparkles, Send } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   Select,
   SelectContent,
@@ -71,6 +72,9 @@ const languageOptions: { value: SupportedLanguage; label: string }[] = [
   { value: "hindi", label: "Hindi" },
   { value: "marathi", label: "Marathi" },
 ];
+const TELEGRAM_BOT_URL = "https://t.me/leagalEase_bot";
+const TELEGRAM_QR_LOCAL = "/telegram-bot-qr.jpg";
+const TELEGRAM_QR_FALLBACK = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(TELEGRAM_BOT_URL)}`;
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -78,6 +82,7 @@ const Upload = () => {
   const [documents, setDocuments] = useState<UploadedDocument[]>([]);
   const [activeTab, setActiveTab] = useState<"upload" | "paste">("paste");
   const [language, setLanguage] = useState<SupportedLanguage>("english");
+  const [qrImageSrc, setQrImageSrc] = useState(TELEGRAM_QR_LOCAL);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -132,14 +137,44 @@ const Upload = () => {
   return (
     <div className="min-h-screen bg-background bg-grid">
       <div className="container mx-auto px-6 py-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-8 text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <div className="mb-8 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/")}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <HoverCard openDelay={100} closeDelay={100}>
+            <HoverCardTrigger asChild>
+              <Button
+                asChild
+                variant="outline"
+                size="icon"
+                className="rounded-full border-border bg-card text-foreground hover:border-primary/30 hover:text-primary"
+              >
+                <a
+                  href={TELEGRAM_BOT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Open LegalEase Telegram bot"
+                  title="Chat on Telegram"
+                >
+                  <Send className="h-4 w-4" />
+                </a>
+              </Button>
+            </HoverCardTrigger>
+            <HoverCardContent align="end" side="bottom" className="w-[240px] p-2">
+              <img
+                src={qrImageSrc}
+                alt="LegalEase Telegram bot QR code"
+                className="h-auto w-full rounded-md border border-border object-cover"
+                onError={() => setQrImageSrc(TELEGRAM_QR_FALLBACK)}
+              />
+            </HoverCardContent>
+          </HoverCard>
+        </div>
 
         <motion.div
           className="max-w-3xl mx-auto"
